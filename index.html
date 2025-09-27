@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linear Regression Visualizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 24px;
+    }
+    h1 {
+      font-size: 1.3em;
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .sliders {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .slider-group label {
+      font-size: 0.95em;
+      margin-bottom: 4px;
+    }
+    .slider-group input[type=range] {
+      width: 120px;
+    }
+    .mse {
+      text-align: center;
+      font-size: 1.1em;
+      margin-bottom: 12px;
+      color: #0077cc;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #f4f6fb;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Linear Regression Visualizer</h1>
+    <div class="sliders">
+      <div class="slider-group">
+        <label for="a-slider">Slope (a)</label>
+        <input type="range" id="a-slider" min="-2" max="2" step="0.01" value="0.5">
+        <span id="a-value">0.50</span>
+      </div>
+      <div class="slider-group">
+        <label for="b-slider">Intercept (b)</label>
+        <input type="range" id="b-slider" min="-10" max="10" step="0.01" value="2">
+        <span id="b-value">2.00</span>
+      </div>
+    </div>
+    <div class="mse">MSE: <span id="mse-value">0.00</span></div>
+    <canvas id="plot" width="400" height="300"></canvas>
+  </div>
+  <div class="practice-section">
+    <h2 style="text-align:center;font-size:1.1em;margin-top:32px;">Practice Questions</h2>
+    <ol id="questions" style="max-width:500px;margin:0 auto;padding-left:20px;">
+      <!-- Questions will be inserted here by JS -->
+    </ol>
+  </div>
+  <script>
+    // Three points with good y-axis spacing
+    const points = [
+      {x: 1, y: 3},
+      {x: 3, y: 8},
+      {x: 6, y: 2}
+    ];
+    const canvas = document.getElementById('plot');
+    const ctx = canvas.getContext('2d');
+    const aSlider = document.getElementById('a-slider');
+    const bSlider = document.getElementById('b-slider');
+    const aValue = document.getElementById('a-value');
+    const bValue = document.getElementById('b-value');
+    const mseValue = document.getElementById('mse-value');
+
+    function getLineY(a, b, x) {
+      return a * x + b;
+    }
+
+    function meanSquaredError(a, b) {
+      let sum = 0;
+      for (const pt of points) {
+        const pred = getLineY(a, b, pt.x);
+        sum += Math.pow(pred - pt.y, 2);
+      }
+      return (sum / points.length).toFixed(2);
+    }
+
+    function mapX(x) {
+      // Map x in [0,7] to canvas width
+      return 40 + x * 50;
+    }
+    function mapY(y) {
+      // Map y in [0,10] to canvas height (invert y)
+      return 260 - y * 22;
+    }
+
+    function draw(a, b) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Axes
+      ctx.strokeStyle = '#bbb';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(40, 20); ctx.lineTo(40, 260); // y-axis
+      ctx.moveTo(40, 260); ctx.lineTo(380, 260); // x-axis
+      ctx.stroke();
+      // Points
+      for (const pt of points) {
+        ctx.beginPath();
+        ctx.arc(mapX(pt.x), mapY(pt.y), 6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#0077cc';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      // Line y = ax + b
+      ctx.beginPath();
+      let x0 = 0, x1 = 7;
+      ctx.moveTo(mapX(x0), mapY(getLineY(a, b, x0)));
+      ctx.lineTo(mapX(x1), mapY(getLineY(a, b, x1)));
+      ctx.strokeStyle = '#e67e22';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    function update() {
+      const a = parseFloat(aSlider.value);
+      const b = parseFloat(bSlider.value);
+      aValue.textContent = a.toFixed(2);
+      bValue.textContent = b.toFixed(2);
+      draw(a, b);
+      mseValue.textContent = meanSquaredError(a, b);
+    }
+
+    aSlider.addEventListener('input', update);
+    bSlider.addEventListener('input', update);
+    update();
+
+    // Practice questions
+    const practiceQuestions = [
+      {
+        points: [ {x:1,y:4}, {x:2,y:7}, {x:5,y:3} ],
+        line: {a:1.2, b:2}
+      },
+      {
+        points: [ {x:0,y:2}, {x:3,y:6}, {x:6,y:1} ],
+        line: {a:0.8, b:1.5}
+      },
+      {
+        points: [ {x:2,y:5}, {x:4,y:9}, {x:7,y:2} ],
+        line: {a:1.5, b:0.5}
+      },
+      {
+        points: [ {x:1,y:3}, {x:3,y:8}, {x:6,y:2} ],
+        line: {a:0.5, b:2}
+      },
+      {
+        points: [ {x:0,y:1}, {x:2,y:4}, {x:5,y:7} ],
+        line: {a:1.3, b:0.7}
+      }
+    ];
+
+    function mseForQuestion(q) {
+      let sum = 0;
+      for (const pt of q.points) {
+        const pred = q.line.a * pt.x + q.line.b;
+        sum += Math.pow(pred - pt.y, 2);
+      }
+      return (sum / q.points.length).toFixed(2);
+    }
+
+    function renderQuestions() {
+      const ol = document.getElementById('questions');
+      ol.innerHTML = '';
+      practiceQuestions.forEach((q, i) => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '18px';
+        const pts = q.points.map(pt => `(${pt.x}, ${pt.y})`).join(', ');
+        li.innerHTML = `
+          <div style=\"margin-bottom:4px;\">Points: <b>${pts}</b></div>
+          <div style=\"margin-bottom:4px;\">Line: <b>y = ${q.line.a}x + ${q.line.b}</b></div>
+          <div style=\"margin-bottom:8px;\">Calculate the mean squared error (MSE) for this line and these points.</div>
+          <button class=\"reveal-btn\" style=\"background:#e7f3ff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.95em;\">Reveal Answer</button>
+          <span class=\"answer\" style=\"display:none;margin-left:12px;color:#e67e22;font-weight:500;\">MSE: ${mseForQuestion(q)}</span>
+        `;
+        const btn = li.querySelector('.reveal-btn');
+        const ans = li.querySelector('.answer');
+        btn.addEventListener('click', () => {
+          ans.style.display = 'inline';
+          btn.style.display = 'none';
+        });
+        ol.appendChild(li);
+      });
+
+      // Five more: students write MSE(a, b) equation
+      const symbolicQuestions = [
+        [ {x:1,y:5}, {x:2,y:7}, {x:4,y:3} ],
+        [ {x:0,y:2}, {x:3,y:6}, {x:5,y:1} ],
+        [ {x:2,y:4}, {x:4,y:8}, {x:7,y:2} ],
+        [ {x:1,y:3}, {x:3,y:9}, {x:6,y:2} ],
+        [ {x:0,y:1}, {x:2,y:5}, {x:5,y:7} ]
+      ];
+      symbolicQuestions.forEach((pts, i) => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '18px';
+        const ptsStr = pts.map(pt => `(${pt.x}, ${pt.y})`).join(', ');
+        li.innerHTML = `
+          <div style=\"margin-bottom:4px;\">Points: <b>${ptsStr}</b></div>
+          <div style=\"margin-bottom:8px;\">Given the model <b>y = ax + b</b>, write the equation for the mean squared error (MSE) as a function of <b>a</b> and <b>b</b> for these points.</div>
+          <button class=\"reveal-btn\" style=\"background:#e7f3ff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.95em;\">Reveal Answer</button>
+          <span class=\"answer\" style=\"display:none;margin-left:12px;color:#e67e22;font-weight:500;\">MSE(a, b) = [${pts.map(pt => `(a*${pt.x} + b - ${pt.y})²`).join(' + ')}] / 3</span>
+        `;
+        const btn = li.querySelector('.reveal-btn');
+        const ans = li.querySelector('.answer');
+        btn.addEventListener('click', () => {
+          ans.style.display = 'inline';
+          btn.style.display = 'none';
+        });
+        ol.appendChild(li);
+      });
+    }
+    renderQuestions();
+  </script>
+</html>
